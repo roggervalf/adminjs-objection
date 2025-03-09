@@ -31,8 +31,18 @@ export const convertFilter = (
     } else if (property.type() === 'string' && !!property.availableValues()) {
       qb.where(path, operators.eq, value as string);
     } else if (property.type() === 'string') {
-      // Should be safe: https://github.com/knex/documentation/issues/73#issuecomment-572482153
-      qb.where(raw('lower(??)', [path]), operators.like, `%${String(value).toLowerCase()}%`);
+      if (typeof value === 'object') {
+        if (value.startsWith) {
+          qb.where(raw('lower(??)', [path]), operators.like, `${String(value.startsWith).toLowerCase()}%`);
+        } else if (value.endsWith) {
+          qb.where(raw('lower(??)', [path]), operators.like, `%${String(value.endsWith).toLowerCase()}`);
+        } else if (value.equals) {
+          qb.where(path, operators.eq, value.equals as string);
+        }
+      } else {
+        // Should be safe: https://github.com/knex/documentation/issues/73#issuecomment-572482153
+        qb.where(raw('lower(??)', [path]), operators.like, `%${String(value).toLowerCase()}%`);
+      }
     } else {
       qb.where(path, operators.eq, value as string);
     }
