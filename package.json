@@ -12,6 +12,10 @@
   "license": "MIT",
   "description": "ObjectionJS adapter for AdminJS",
   "author": "Rafał Dzięgielewski <rafal.dzieg@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoftwareBrothers/adminjs-objection.git"
+  },
   "keywords": [
     "objection",
     "objectionjs",
