@@ -8,6 +8,21 @@ export const operators = {
   like: 'like',
 };
 
+const OPERATOR_SEPARATOR = '~';
+
+const MATCHING_PATTERNS = {
+  EQ: 'equals',
+  NE: 'notEquals',
+  CO: 'contains',
+  EW: 'endsWith',
+  SW: 'startsWith',
+};
+
+const OPERATORS = {
+  AND: 'and',
+  OR: 'or',
+};
+
 export const convertFilter = (
   qb: QueryBuilder<Model, Model[]>,
   originalFilter: Filter,
@@ -32,12 +47,35 @@ export const convertFilter = (
       qb.where(path, operators.eq, value as string);
     } else if (property.type() === 'string') {
       if (typeof value === 'object') {
-        if (value.startsWith) {
-          qb.where(raw('lower(??)', [path]), operators.like, `${String(value.startsWith).toLowerCase()}%`);
-        } else if (value.endsWith) {
-          qb.where(raw('lower(??)', [path]), operators.like, `%${String(value.endsWith).toLowerCase()}`);
-        } else if (value.equals) {
-          qb.where(path, operators.eq, value.equals as string);
+        if (value[MATCHING_PATTERNS.SW]) {
+          qb.where(raw('lower(??)', [path]), operators.like, `${String(value[MATCHING_PATTERNS.SW]).toLowerCase()}%`);
+        } else if (value[MATCHING_PATTERNS.EW]) {
+          qb.where(raw('lower(??)', [path]), operators.like, `%${String(value[MATCHING_PATTERNS.EW]).toLowerCase()}`);
+        } else if (value[MATCHING_PATTERNS.EQ]) {
+          qb.where(path, operators.eq, value[MATCHING_PATTERNS.EQ] as string);
+        } else if (value[MATCHING_PATTERNS.NE]) {
+          qb.whereNot(path, operators.eq, value[MATCHING_PATTERNS.NE] as string);
+        } else {
+          const orPrefix = `${OPERATORS.OR}${OPERATOR_SEPARATOR}`;
+          if (value[`${orPrefix}${MATCHING_PATTERNS.SW}`]) {
+            qb.orWhere(
+              raw('lower(??)', [path]),
+              operators.like,
+              `${String(value[`${orPrefix}${MATCHING_PATTERNS.SW}`]).toLowerCase()}%`,
+            );
+          } else if (value[`${orPrefix}${MATCHING_PATTERNS.EW}`]) {
+            qb.orWhere(
+              raw('lower(??)', [path]),
+              operators.like,
+              `%${String(value[`${orPrefix}${MATCHING_PATTERNS.EW}`]).toLowerCase()}`,
+            );
+          } else if (value[`${orPrefix}${MATCHING_PATTERNS.EQ}`]) {
+            qb.orWhere(path, operators.eq, value[`${orPrefix}${MATCHING_PATTERNS.EQ}`] as string);
+          } else if (value[`${orPrefix}${MATCHING_PATTERNS.NE}`]) {
+            qb.orWhereNot(path, operators.eq, value[`${orPrefix}${MATCHING_PATTERNS.NE}`] as string);
+          } else if (value[OPERATORS.OR]) {
+            qb.where(raw('lower(??)', [path]), operators.like, `%${String(value[OPERATORS.OR]).toLowerCase()}%`);
+          }
         }
       } else {
         // Should be safe: https://github.com/knex/documentation/issues/73#issuecomment-572482153
