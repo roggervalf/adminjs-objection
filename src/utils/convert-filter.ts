@@ -74,7 +74,7 @@ export const convertFilter = (
           } else if (value[`${orPrefix}${MATCHING_PATTERNS.NE}`]) {
             qb.orWhereNot(path, operators.eq, value[`${orPrefix}${MATCHING_PATTERNS.NE}`] as string);
           } else if (value[OPERATORS.OR]) {
-            qb.where(raw('lower(??)', [path]), operators.like, `%${String(value[OPERATORS.OR]).toLowerCase()}%`);
+            qb.orWhere(raw('lower(??)', [path]), operators.like, `%${String(value[OPERATORS.OR]).toLowerCase()}%`);
           }
         }
       } else {
