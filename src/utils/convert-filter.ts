@@ -1,6 +1,8 @@
 import { Filter } from 'adminjs';
 import { Model, QueryBuilder, raw } from 'objection';
 
+export const uuidRegex = /^[0-9A-F]{8}-[0-9A-F]{4}-[5|4|3|2|1][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+
 export const operators = {
   from: '>=',
   to: '<=',
@@ -31,8 +33,12 @@ export const convertFilter = (
     } else if (property.type() === 'string' && !!property.availableValues()) {
       qb.where(path, operators.eq, value as string);
     } else if (property.type() === 'string') {
-      // Should be safe: https://github.com/knex/documentation/issues/73#issuecomment-572482153
-      qb.where(raw('lower(??)', [path]), operators.like, `%${String(value).toLowerCase()}%`);
+      if (value || uuidRegex.test(value.toString())) {
+        qb.where(path, operators.eq, value as string);
+      } else {
+        // Should be safe: https://github.com/knex/documentation/issues/73#issuecomment-572482153
+        qb.where(raw('lower(??)', [path]), operators.like, `%${String(value).toLowerCase()}%`);
+      }
     } else {
       qb.where(path, operators.eq, value as string);
     }
